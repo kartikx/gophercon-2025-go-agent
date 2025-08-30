@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: doc-agent
+  namespace: agents
+  labels:
+    app: doc-agent
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: doc-agent
+  template:
+    metadata:
+      labels:
+        app: doc-agent
+    spec:
+      containers:
+      - name: doc-agent
+        image: doc-agent:latest
+        imagePullPolicy: Never  # For local testing
+        ports:
+        - containerPort: 8080
+        env:
+        - name: AGENT_TYPE
+          value: "doc"
+        - name: PORT
+          value: "8080"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: anthropic-secret
+              key: api-key
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: doc-agent-service
+  namespace: agents
+spec:
+  selector:
+    app: doc-agent
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP

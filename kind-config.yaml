@@ -1,0 +1,25 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: agent-cluster
+nodes:
+- role: control-plane
+  # Port forward for accessing services
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  extraPortMappings:
+  # Port forward for coder agent service
+  - containerPort: 30080
+    hostPort: 9080
+    protocol: TCP
+  # Port forward for doc agent service  
+  - containerPort: 30081
+    hostPort: 9081
+    protocol: TCP
+- role: worker
+  # Additional worker for better load balancing demonstration
+- role: worker
+  # Second worker node to show multi-node deployment
